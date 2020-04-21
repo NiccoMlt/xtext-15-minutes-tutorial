@@ -34,11 +34,17 @@ class DomainmodelGenerator extends AbstractGenerator {
         }
 	}
 	
-	// write the actual template code for an entity
+	// Write the actual template code for an entity.
+	// The package declaration has to be wrapped in an IF expression
+	// to not fail if the Entity is not contained in a package
+	// Also handle the superType of an Entity gracefully by using another IF expression
 	def compile(Entity e) '''
-        package «e.eContainer.fullyQualifiedName»;
-            
-        public class «e.name» {
-        }
+	    «IF e.eContainer.fullyQualifiedName !== null»
+	        package «e.eContainer.fullyQualifiedName»;
+	    «ENDIF»
+	        
+	    public class «e.name» «IF e.superType !== null
+                »extends «e.superType.fullyQualifiedName» «ENDIF»{
+	    }
     '''
 }
