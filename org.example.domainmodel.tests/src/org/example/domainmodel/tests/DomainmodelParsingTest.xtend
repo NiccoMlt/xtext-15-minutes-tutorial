@@ -21,12 +21,14 @@ import org.example.domainmodel.validation.DomainmodelValidator
 class DomainmodelParsingTest {
 	
 	// The utility class ParseHelper allows to parse an arbitrary string into a Domainmodel.
-	@Inject
-	ParseHelper<Domainmodel> parseHelper
+	@Inject ParseHelper<Domainmodel> parseHelper
 	
 	// The utility class ValidationTestHelper allows to test the custom validation rules
-	@Inject
- 	ValidationTestHelper validationTestHelper
+	@Inject ValidationTestHelper validationTestHelper
+ 	
+ 	@Inject extension ParseHelper<Domainmodel>
+
+ 	@Inject extension ValidationTestHelper
 	
 	@Test
 	def void loadModel() {
@@ -48,26 +50,24 @@ class DomainmodelParsingTest {
         Assertions.assertSame(entity, entity.features.head.type)
     }
     
-     @Test
-	 def testValidModel() {
-	     val entity = parseHelper.parse(
-	         "entity MyEntity {
-	             parent: MyEntity
-	         }")
-	     validationTestHelper.assertNoIssues(entity)
-	 } 
+    @Test
+	def testValidModel() {
+		"entity MyEntity {
+			parent: MyEntity
+		}".parse.assertNoIssues
+	}
 	 
-	 @Test
-	 def testNameStartsWithCapitalWarning() {
-	     val entity = parseHelper.parse(
-	         "entity myEntity {
-	             parent: myEntity
-	         }")
-	     validationTestHelper.assertWarning(
-	     	entity,
-	     	DomainmodelPackage.Literals.ENTITY, 
-	     	DomainmodelValidator.INVALID_NAME,
-	     	"Name should start with a capital"
-	     )
-	 }
+	@Test
+	def testNameStartsWithCapitalWarning() {
+	    val entity = parseHelper.parse(
+	        "entity myEntity {
+	            parent: myEntity
+	        }")
+	    validationTestHelper.assertWarning(
+	    	entity,
+	    	DomainmodelPackage.Literals.ENTITY, 
+	    	DomainmodelValidator.INVALID_NAME,
+	    	"Name should start with a capital"
+	    )
+	}
 }
