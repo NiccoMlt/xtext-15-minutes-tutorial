@@ -1,0 +1,9 @@
+/**
+ * 
+ */
+/**
+ * @author nicco
+ *
+ */
+module dummyProject {
+}
