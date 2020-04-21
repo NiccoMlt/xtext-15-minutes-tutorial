@@ -1,12 +1,36 @@
 grammar org.example.domainmodel.Domainmodel with org.eclipse.xtext.common.Terminals
  
 generate domainmodel "http://www.example.org/domainmodel/Domainmodel"
- 
+
 // The first rule in a grammar is always used as the start rule
 // It says that a Domainmodel contains an arbitrary number (*) of Types 
 // which are added (+=) to a feature called elements.
-Domainmodel :
-    (elements+=Type)*;
+// Domainmodel :
+//    (elements+=Type)*;
+
+
+// Since a Domainmodel no longer contains types but also packages, the entry rule has to be modified:
+// a common super type for PackageDeclarations and Types should be introduced: the AbstractElement
+Domainmodel:
+    (elements+=AbstractElement)*;
+
+PackageDeclaration:
+    'package' name=QualifiedName '{'
+        (elements+=AbstractElement)*
+    '}';
+ 
+AbstractElement:
+    PackageDeclaration | Type | Import;
+    
+Import:
+    'import' importedNamespace=QualifiedNameWithWildcard;
+ 
+QualifiedNameWithWildcard:
+    QualifiedName '.*'?;
+    
+QualifiedName:
+    ID ('.' ID)*;
+
 
 // The rule Type delegates to either the rule DataType or (|) the rule Entity
 Type:
@@ -21,7 +45,7 @@ DataType:
 // Since the feature named superType is a cross reference (note the square brackets),
 // the parser rule Entity is not called here, but only a single identifier (the ID-rule) is parsed. 
 Entity:
-    'entity' name=ID ('extends' superType=[Entity])? '{'
+    'entity' name=ID ('extends' superType=[Entity|QualifiedName])? '{'
         (features+=Feature)*
     '}';
 
@@ -29,4 +53,4 @@ Entity:
 // The assignment operator (?=) implies that the feature many is of type boolean
 // different cardinalities (? = optional, * = any number, + = at least once)
 Feature:
-    (many?='many')? name=ID ':' type=[Type];
+    (many?='many')? name=ID ':' type=[Type|QualifiedName];
