@@ -3,6 +3,18 @@
  */
 package org.example.domainmodel.validation;
 
+import org.eclipse.xtext.validation.Check;
+import org.eclipse.xtext.validation.CheckType;
+import org.example.domainmodel.domainmodel.DomainmodelPackage;
+import org.example.domainmodel.domainmodel.Entity;
+import org.example.domainmodel.domainmodel.Feature;
+
+import com.google.common.base.Objects;
+
+// One of the main advantages of DSLs is the possibility to statically validate domain-specific constraints.
+// Because this is a common use case, Xtext provides a dedicated hook for this kind of validation rules.
+// We want to ensure that the name of an Entity starts with an upper-case letter
+// and that all features have distinct names across the inheritance relationship of an Entity.
 
 /**
  * This class contains custom validation rules. 
@@ -11,15 +23,32 @@ package org.example.domainmodel.validation;
  */
 public class DomainmodelValidator extends AbstractDomainmodelValidator {
 	
-//	public static final String INVALID_NAME = "invalidName";
-//
-//	@Check
-//	public void checkGreetingStartsWithCapital(Greeting greeting) {
-//		if (!Character.isUpperCase(greeting.getName().charAt(0))) {
-//			warning("Name should start with a capital",
-//					DomainmodelPackage.Literals.GREETING__NAME,
-//					INVALID_NAME);
-//		}
-//	}
+    public static final String INVALID_NAME = "invalidName";
+    
+    // Any name for the method will do.
+    // The important thing is the Check annotation
+    // that advises the framework to use the method as a validation rule. 
+    @Check
+    public void checkNameStartsWithCapital(Entity entity) {
+        if (!Character.isUpperCase(entity.getName().charAt(0))) {
+            warning("Name should start with a capital", 
+                DomainmodelPackage.Literals.TYPE__NAME,
+                INVALID_NAME);
+        }
+    }
+    
+    @Check(CheckType.NORMAL)
+    public void checkFeatureNameIsUnique(Feature feature) {
+        Entity superEntity = ((Entity) feature.eContainer()).getSuperType();
+        while (superEntity != null) {
+            for (Feature other : superEntity.getFeatures()) {
+                if (Objects.equal(feature.getName(), other.getName())) {
+                    error("Feature names have to be unique", DomainmodelPackage.Literals.FEATURE__NAME);
+                    return;
+                }
+            }
+            superEntity = superEntity.getSuperType();
+        }
+    }
 	
 }
