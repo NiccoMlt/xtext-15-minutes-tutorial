@@ -11,12 +11,22 @@ import org.example.domainmodel.domainmodel.Domainmodel
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.^extension.ExtendWith
+import org.example.domainmodel.domainmodel.Entity
+import org.eclipse.xtext.testing.validation.ValidationTestHelper
+import org.example.domainmodel.domainmodel.DomainmodelPackage
+import org.example.domainmodel.validation.DomainmodelValidator
 
 @ExtendWith(InjectionExtension)
 @InjectWith(DomainmodelInjectorProvider)
 class DomainmodelParsingTest {
+	
+	// The utility class ParseHelper allows to parse an arbitrary string into a Domainmodel.
 	@Inject
 	ParseHelper<Domainmodel> parseHelper
+	
+	// The utility class ValidationTestHelper allows to test the custom validation rules
+	@Inject
+ 	ValidationTestHelper validationTestHelper
 	
 	@Test
 	def void loadModel() {
@@ -27,4 +37,37 @@ class DomainmodelParsingTest {
 		val errors = result.eResource.errors
 		Assertions.assertTrue(errors.isEmpty, '''Unexpected errors: «errors.join(", ")»''')
 	}
+	
+	@Test 
+    def void parseDomainmodel() {
+        val model = parseHelper.parse(
+            "entity MyEntity {
+                parent: MyEntity
+            }")
+        val entity = model.elements.head as Entity
+        Assertions.assertSame(entity, entity.features.head.type)
+    }
+    
+     @Test
+	 def testValidModel() {
+	     val entity = parseHelper.parse(
+	         "entity MyEntity {
+	             parent: MyEntity
+	         }")
+	     validationTestHelper.assertNoIssues(entity)
+	 } 
+	 
+	 @Test
+	 def testNameStartsWithCapitalWarning() {
+	     val entity = parseHelper.parse(
+	         "entity myEntity {
+	             parent: myEntity
+	         }")
+	     validationTestHelper.assertWarning(
+	     	entity,
+	     	DomainmodelPackage.Literals.ENTITY, 
+	     	DomainmodelValidator.INVALID_NAME,
+	     	"Name should start with a capital"
+	     )
+	 }
 }
